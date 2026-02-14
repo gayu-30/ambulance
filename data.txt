@@ -1,0 +1,112 @@
+import math
+import random
+
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371  
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * \
+        math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
+
+
+
+def traffic_multiplier():
+    return random.uniform(1.0, 1.6)  
+
+
+
+def severity_priority(severity_level):
+    if severity_level == "High":
+        return 1.2  # ambulance drives faster
+    elif severity_level == "Medium":
+        return 1.0
+    else:
+        return 0.9
+
+
+
+ambulances = [
+    {"id": 1, "lat": 13.07, "lon": 80.28, "base_speed": 60},
+    {"id": 2, "lat": 13.09, "lon": 80.27, "base_speed": 70},
+    {"id": 3, "lat": 13.05, "lon": 80.25, "base_speed": 65}
+]
+
+
+
+hospitals = [
+    {"name": "City Trauma Center", "lat": 13.0827, "lon": 80.2707, "type": "Accident"},
+    {"name": "Cardiac Hospital", "lat": 13.05, "lon": 80.25, "type": "Cardiac"}
+]
+
+
+
+incident = {"lat": 13.08, "lon": 80.27}
+emergency_type = "Cardiac"      
+severity = "High"               
+
+
+
+best_ambulance = None
+minimum_time = float("inf")
+
+for amb in ambulances:
+
+    distance = calculate_distance(
+        incident["lat"], incident["lon"],
+        amb["lat"], amb["lon"]
+    )
+
+    traffic = traffic_multiplier()
+    speed = amb["base_speed"] * severity_priority(severity)
+
+    estimated_time = (distance / speed) * 60 * traffic
+
+    if estimated_time < minimum_time:
+        minimum_time = estimated_time
+        best_ambulance = amb
+
+
+
+best_hospital = None
+min_distance = float("inf")
+
+for hosp in hospitals:
+
+    if hosp["type"] == emergency_type:
+
+        distance = calculate_distance(
+            incident["lat"], incident["lon"],
+            hosp["lat"], hosp["lon"]
+        )
+
+        if distance < min_distance:
+            min_distance = distance
+            best_hospital = hosp
+
+
+
+effectiveness_score = max(0, 100 - minimum_time)
+
+
+
+print("\n🚑 AI-Based Ambulance Routing Effectiveness System")
+
+print(f"Emergency Type       : {emergency_type}")
+print(f"Severity Level       : {severity}")
+print(f"Incident Location    : {incident}")
+print()
+print(f"Selected Ambulance   : ID {best_ambulance['id']}")
+print(f"Estimated Arrival    : {minimum_time:.2f} minutes")
+print()
+print(f"Assigned Hospital    : {best_hospital['name']}")
+print(f"Hospital Type        : {best_hospital['type']}")
+print(f"Distance to Hospital : {min_distance:.2f} km")
+print()
+print(f"Routing Effectiveness Score : {effectiveness_score:.2f}%")
